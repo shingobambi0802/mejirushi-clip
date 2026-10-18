@@ -15,14 +15,16 @@
 <section class="footnote" id="about"><strong>めじるしクリップについて</strong><p>メーカー公式の商品情報を見つけやすくするための非公式ファン向け情報サイトです。メーカー各社とは関係ありません。発売時期、価格、取扱状況は変更される場合があります。必ずリンク先の公式ページをご確認ください。掲載サンプルは最新の販売・在庫情報を保証するものではありません。</p><p>現在は公開テスト版です。商品情報は順次追加予定です。</p></section></main>
 <footer><div class="wrap">© <span id="year"></span> めじるしクリップ · 非公式情報サイト</div></footer>
 <script>
-// 商品を追加する場合はこの配列に1件ずつ追加します。公式で確認した情報のみ掲載してください。
-const PRODUCTS = [
-  {name:'ちいかわ めじるしアクセサリー3',maker:'バンダイ',category:'再販',release:'公式ページで確認',price:'公式ページで確認',url:'https://gashapon.jp/products/detail.php?jan_code=4570117984075000',sample:true,emoji:'🎀'}
-];
+// 商品データは products.json から読み込みます。
+let PRODUCTS = [];
 const grid=document.querySelector('#products'),query=document.querySelector('#query'),count=document.querySelector('#count');let active='すべて';
 function node(tag,cls,value){const el=document.createElement(tag);if(cls)el.className=cls;if(value!==undefined)el.textContent=value;return el}
 function draw(){grid.replaceChildren();const q=query.value.trim().toLocaleLowerCase('ja');const shown=PRODUCTS.filter(p=>(active==='すべて'||p.category===active)&&[p.name,p.maker,p.category].join(' ').toLocaleLowerCase('ja').includes(q));count.textContent=`${shown.length}件表示`;
 if(!shown.length){grid.append(node('div','empty','該当する商品はありません。検索条件を変えてみてね。'));return}
 for(const p of shown){const card=node('article','card');const visual=node('div','visual',p.emoji||'🎀');visual.setAttribute('aria-hidden','true');card.append(visual);const body=node('div','content'),badges=node('div','badges');badges.append(node('span','badge',p.category));if(p.sample)badges.append(node('span','badge sample','掲載サンプル'));body.append(badges,node('h3','',p.name),node('p','meta',`メーカー：${p.maker}`),node('p','meta',`発売時期：${p.release}`),node('p','meta',`価格：${p.price}`));const link=node('a','link','公式ページで確認 ↗');link.href=p.url;link.target='_blank';link.rel='noopener noreferrer';body.append(link);card.append(body);grid.append(card)}}
-query.addEventListener('input',draw);document.querySelectorAll('.filter').forEach(b=>b.addEventListener('click',()=>{active=b.dataset.filter;document.querySelectorAll('.filter').forEach(x=>{const on=x===b;x.classList.toggle('active',on);x.setAttribute('aria-pressed',String(on))});draw()}));document.querySelector('#year').textContent=new Date().getFullYear();draw();
+query.addEventListener('input',draw);document.querySelectorAll('.filter').forEach(b=>b.addEventListener('click',()=>{active=b.dataset.filter;document.querySelectorAll('.filter').forEach(x=>{const on=x===b;x.classList.toggle('active',on);x.setAttribute('aria-pressed',String(on))});draw()}));document.querySelector('#year').textContent=new Date().getFullYear();
+fetch('./products.json', {cache:'no-store'})
+ .then(r=>{if(!r.ok)throw new Error('商品データを取得できません');return r.json()})
+ .then(data=>{if(!Array.isArray(data))throw new Error('商品データの形式が違います');PRODUCTS=data.filter(p=>p&&typeof p.name==='string'&&typeof p.url==='string'&&/^https:\/\//.test(p.url));draw()})
+ .catch(err=>{count.textContent='読み込みエラー';grid.replaceChildren(node('div','empty','商品データを読み込めませんでした。products.json を確認してください。'))});
 </script></body></html>
